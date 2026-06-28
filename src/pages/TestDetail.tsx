@@ -54,6 +54,34 @@ export function TestDetail(): JSX.Element {
     if (user && id) loadData()
   }, [user, id, loadData])
 
+  async function handlePreFileSelect(): Promise<void> {
+    if (!test || !settings) return
+    try {
+      const inputHandle = await getDirectoryHandle('dir_handle_inputDir')
+      const outputHandle = await getDirectoryHandle('dir_handle_outputDir')
+      const templatesHandle = await getDirectoryHandle('dir_handle_templatesDir')
+
+      if (!inputHandle || !outputHandle || !templatesHandle) {
+        addToast('Please select all directories in Settings first.', 'error')
+        return
+      }
+
+      if (!(await verifyPermission(inputHandle)) || !(await verifyPermission(outputHandle)) || !(await verifyPermission(templatesHandle, false))) {
+        addToast('Please grant folder permissions in the browser prompt.', 'error')
+        return
+      }
+
+      // Permissions granted, open file selector
+      fileInputRef.current?.click()
+    } catch (err: unknown) {
+      console.error(err)
+      addToast(
+        'Error requesting permissions: ' + (err instanceof Error ? err.message : String(err)),
+        'error'
+      )
+    }
+  }
+
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
     if (!test || !settings) return
     const file = e.target.files?.[0]
@@ -67,10 +95,6 @@ export function TestDetail(): JSX.Element {
 
       if (!inputHandle || !outputHandle || !templatesHandle) {
         throw new Error('Please select all directories in Settings first.')
-      }
-
-      if (!(await verifyPermission(inputHandle)) || !(await verifyPermission(outputHandle)) || !(await verifyPermission(templatesHandle, false))) {
-        throw new Error('Please grant folder permissions in the browser prompt.')
       }
 
       // Clear directories
@@ -185,7 +209,7 @@ export function TestDetail(): JSX.Element {
           <div className="text-center py-12">
             <h3 className="text-lg font-medium text-gray-800 mb-4">Upload PDF to begin</h3>
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handlePreFileSelect}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
             >
               Select PDF File

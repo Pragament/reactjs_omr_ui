@@ -84,6 +84,10 @@ export async function readFirstCsvFile(dirHandle: FileSystemDirectoryHandle): Pr
     if (entry.kind === 'file' && entry.name.endsWith('.csv')) {
       const fileHandle = entry as FileSystemFileHandle
       return await fileHandle.getFile()
+    } else if (entry.kind === 'directory') {
+      const subDirHandle = entry as FileSystemDirectoryHandle
+      const file = await readFirstCsvFile(subDirHandle)
+      if (file) return file
     }
   }
   return null
